@@ -2,11 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const search = useSearchParams();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -26,7 +25,7 @@ export default function LoginPage() {
       setErro("E-mail ou senha inválidos. Confira os dados e tente novamente.");
       return;
     }
-    router.replace(search.get("callbackUrl") || "/");
+    router.replace("/");
     router.refresh();
   }
 
