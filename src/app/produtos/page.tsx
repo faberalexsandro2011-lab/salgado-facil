@@ -80,6 +80,47 @@ export default function ProdutosPage() {
     }
   }
 
+  async function editarProduto(produto: Produto) {
+    const nome = window.prompt("Nome do produto:", produto.nome);
+    if (nome === null) return;
+    const precoTexto = window.prompt("Preço de venda (R$):", String(produto.precoVenda).replace(".", ","));
+    if (precoTexto === null) return;
+    const precoVenda = Number(precoTexto.replace(",", "."));
+    if (!nome.trim() || !Number.isFinite(precoVenda) || precoVenda <= 0) {
+      setErro("Informe um nome e um preço válido.");
+      return;
+    }
+    const resposta = await fetch(`/api/produtos/${produto.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: nome.trim(), precoVenda }),
+    });
+    const dados = await resposta.json();
+    if (!resposta.ok) { setErro(dados.erro || "Não foi possível atualizar."); return; }
+    setMensagem("Produto atualizado.");
+    await carregar();
+  }
+
+  async function ajustarEstoque(produto: Produto) {
+    const texto = window.prompt("Quantidade para adicionar (positivo) ou retirar (negativo):", "0");
+    if (texto === null) return;
+    const ajusteEstoque = Number(texto.replace(",", "."));
+    if (!Number.isFinite(ajusteEstoque) || ajusteEstoque === 0) {
+      setErro("Informe uma quantidade diferente de zero.");
+      return;
+    }
+    const motivoAjuste = window.prompt("Motivo do ajuste:", "Ajuste manual") || "Ajuste manual";
+    const resposta = await fetch(`/api/produtos/${produto.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ajusteEstoque, motivoAjuste }),
+    });
+    const dados = await resposta.json();
+    if (!resposta.ok) { setErro(dados.erro || "Não foi possível ajustar o estoque."); return; }
+    setMensagem("Estoque ajustado e movimentação registrada.");
+    await carregar();
+  }
+
   async function inativar(id: string) {
     if (!window.confirm("Deseja realmente retirar este produto da lista ativa?")) return;
     setErro("");
@@ -146,7 +187,7 @@ export default function ProdutosPage() {
           produtos.length === 0 ? <p className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</p> :
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-sm">
-              <thead><tr className="border-b text-slate-500"><th className="p-3">Produto</th><th className="p-3">Preço</th><th className="p-3">Custo</th><th className="p-3">Estoque</th><th className="p-3">Mínimo</th><th className="p-3">Ação</th></tr></thead>
+              <thead><tr className="border-b text-slate-500"><th className="p-3">Produto</th><th className="p-3">Preço</th><th className="p-3">Custo</th><th className="p-3">Estoque</th><th className="p-3">Mínimo</th><th className="p-3">Ações</th></tr></thead>
               <tbody>{produtos.map(p => {
                 const baixo = Number(p.estoque) <= Number(p.estoqueMinimo);
                 return <tr key={p.id} className="border-b last:border-0">
@@ -155,7 +196,7 @@ export default function ProdutosPage() {
                   <td className="p-3">{moeda(p.custoUnitario)}</td>
                   <td className="p-3"><span className={baixo ? "font-semibold text-red-600" : ""}>{Number(p.estoque).toLocaleString("pt-BR")}</span></td>
                   <td className="p-3">{Number(p.estoqueMinimo).toLocaleString("pt-BR")}</td>
-                  <td className="p-3"><button onClick={() => void inativar(p.id)} className="text-red-600 hover:underline">Inativar</button></td>
+                  <td className="p-3"><div className="flex flex-wrap gap-3"><button onClick={() => void editarProduto(p)} className="font-medium text-blue-700 hover:underline">Editar</button><button onClick={() => void ajustarEstoque(p)} className="font-medium text-orange-700 hover:underline">Estoque</button><button onClick={() => void inativar(p.id)} className="text-red-600 hover:underline">Inativar</button></div></td>
                 </tr>;
               })}</tbody>
             </table>
