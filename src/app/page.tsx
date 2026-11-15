@@ -4,6 +4,7 @@ const atalhos = [
   ["Pedidos", "/pedidos", "Organize encomendas e acompanhe o preparo."],
   ["Nova venda", "/vendas/nova", "Registre uma venda no balcão."],
   ["Produtos", "/produtos", "Cadastre produtos, preços e estoque."],
+  ["Clientes", "/clientes", "Organize seus clientes e contatos."],
 ];
 
 export default function HomePage() {
