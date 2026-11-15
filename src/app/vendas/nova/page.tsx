@@ -1,12 +1,22 @@
-export default function NovaVendaPage() {
-  return (
-    <main className="mx-auto max-w-5xl p-6 md:p-10">
-      <a href="/" className="text-sm font-medium text-orange-600">← Voltar ao início</a>
-      <h1 className="mt-5 text-3xl font-bold">Nova venda</h1>
-      <p className="mt-2 text-slate-600">Registro de vendas, itens, descontos e formas de pagamento.</p>
-      <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-slate-500">
-        Módulo em construção. A próxima etapa é conectar o carrinho ao estoque e registrar as vendas com segurança.
-      </div>
-    </main>
-  );
+"use client";
+import { FormEvent,useEffect,useState } from "react";
+type Produto={id:string;nome:string;unidade:string;precoVenda:string|number;estoque:string|number};
+type Cliente={id:string;nome:string};
+type Item={produtoId:string;quantidade:number};
+const brl=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+export default function NovaVendaPage(){
+ const [produtos,setProdutos]=useState<Produto[]>([]);const [clientes,setClientes]=useState<Cliente[]>([]);
+ const [clienteId,setClienteId]=useState("");const [formaPagamento,setFormaPagamento]=useState("PIX");const [desconto,setDesconto]=useState("0");
+ const [produtoId,setProdutoId]=useState("");const [quantidade,setQuantidade]=useState("1");const [itens,setItens]=useState<Item[]>([]);
+ const [erro,setErro]=useState("");const [saving,setSaving]=useState(false);
+ useEffect(()=>{Promise.all([fetch("/api/produtos").then(r=>r.json()),fetch("/api/clientes").then(r=>r.json())]).then(([p,c])=>{setProdutos(p);setClientes(c);}).catch(()=>setErro("Não foi possível carregar os dados."));},[]);
+ const subtotal=itens.reduce((s,i)=>s+Number(produtos.find(p=>p.id===i.produtoId)?.precoVenda||0)*i.quantidade,0);const desc=Number(desconto)||0;const total=subtotal-desc;
+ function add(){if(!produtoId||Number(quantidade)<=0){setErro("Selecione produto e quantidade.");return;}setErro("");setItens(prev=>{const a=prev.find(i=>i.produtoId===produtoId);return a?prev.map(i=>i.produtoId===produtoId?{...i,quantidade:i.quantidade+Number(quantidade)}:i):[...prev,{produtoId,quantidade:Number(quantidade)}];});setProdutoId("");setQuantidade("1");}
+ async function finish(e:FormEvent){e.preventDefault();setErro("");if(!itens.length){setErro("Adicione itens à venda.");return;}if(desc<0||desc>subtotal){setErro("Desconto inválido.");return;}setSaving(true);try{const r=await fetch("/api/vendas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({clienteId:clienteId||null,formaPagamento,desconto:desc,itens})});const d=await r.json();if(!r.ok)throw new Error(d.erro||"Erro ao registrar venda.");alert("Venda registrada com sucesso!");setItens([]);setDesconto("0");setClienteId("");}catch(e){setErro(e instanceof Error?e.message:"Erro ao registrar venda.");}finally{setSaving(false);}}
+ return <main className="mx-auto max-w-5xl p-5 md:p-10"><a href="/" className="text-sm font-semibold text-orange-600">← Início</a><h1 className="mt-5 text-3xl font-bold">Nova venda</h1><p className="mt-2 text-slate-600">Venda rápida com baixa automática do estoque.</p>{erro&&<p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{erro}</p>}
+ <form onSubmit={finish} className="mt-6 space-y-5"><section className="grid gap-4 rounded-2xl border bg-white p-5 sm:grid-cols-2"><label className="text-sm font-medium">Cliente (opcional)<select value={clienteId} onChange={e=>setClienteId(e.target.value)} className="mt-1 w-full rounded-lg border bg-white p-3"><option value="">Consumidor final</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label><label className="text-sm font-medium">Pagamento<select value={formaPagamento} onChange={e=>setFormaPagamento(e.target.value)} className="mt-1 w-full rounded-lg border bg-white p-3"><option value="PIX">Pix</option><option value="DINHEIRO">Dinheiro</option><option value="DEBITO">Cartão débito</option><option value="CREDITO">Cartão crédito</option><option value="TRANSFERENCIA">Transferência</option></select></label></section>
+ <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Produtos</h2><div className="mt-3 flex flex-col gap-3 sm:flex-row"><select value={produtoId} onChange={e=>setProdutoId(e.target.value)} className="flex-1 rounded-lg border bg-white p-3"><option value="">Selecione</option>{produtos.map(p=><option key={p.id} value={p.id}>{p.nome} ({Number(p.estoque)} em estoque) · {brl(Number(p.precoVenda))}</option>)}</select><input aria-label="Quantidade" type="number" min="0.001" step="0.001" value={quantidade} onChange={e=>setQuantidade(e.target.value)} className="w-full rounded-lg border p-3 sm:w-28"/><button type="button" onClick={add} className="rounded-lg border px-5 py-3 font-semibold">Adicionar</button></div>
+ {itens.map(i=>{const p=produtos.find(p=>p.id===i.produtoId);return <div key={i.produtoId} className="flex justify-between border-b py-3"><span>{i.quantidade} × {p?.nome}</span><span className="flex items-center gap-3">{brl(i.quantidade*Number(p?.precoVenda||0))}<button type="button" onClick={()=>setItens(x=>x.filter(a=>a.produtoId!==i.produtoId))} className="text-red-600">×</button></span></div>})}
+ <label className="mt-4 block max-w-xs text-sm font-medium">Desconto (R$)<input type="number" min="0" step="0.01" value={desconto} onChange={e=>setDesconto(e.target.value)} className="mt-1 w-full rounded-lg border p-3"/></label><div className="mt-4 text-right"><p>Subtotal: {brl(subtotal)}</p><p>Desconto: {brl(desc)}</p><p className="text-2xl font-bold">Total: {brl(total)}</p></div></section>
+ <button disabled={saving} className="w-full rounded-lg bg-orange-600 p-4 font-semibold text-white disabled:opacity-60">{saving?"Registrando...":"Finalizar venda"}</button></form></main>;
 }
