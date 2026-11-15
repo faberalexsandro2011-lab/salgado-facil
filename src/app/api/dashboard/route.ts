@@ -19,7 +19,7 @@ export async function GET() {
     prisma.pedido.count({ where: { tenantId: user.tenantId, status: { in: ["PENDENTE", "EM_PREPARO", "PRONTO"] } } }),
     prisma.produto.findMany({ where: { tenantId: user.tenantId, ativo: true, estoque: { lte: prisma.produto.fields.estoqueMinimo } }, select: { id: true, nome: true, estoque: true, estoqueMinimo: true }, orderBy: { nome: "asc" }, take: 8 }),
     prisma.itemVenda.groupBy({ by: ["descricao"], where: { venda: { tenantId: user.tenantId, recebido: true, criadoEm: { gte: inicioMes } } }, _sum: { quantidade: true, total: true }, orderBy: { _sum: { total: "desc" } }, take: 5 }),
-    prisma.venda.findMany({ where: { tenantId: user.tenantId }, include: { cliente: true }, orderBy: { criadoEm: "desc" }, take: 5, select: { id: true, total: true, formaPagamento: true, criadoEm: true, cliente: { select: { nome: true } } } }),
+    prisma.venda.findMany({ where: { tenantId: user.tenantId }, orderBy: { criadoEm: "desc" }, take: 5, select: { id: true, total: true, formaPagamento: true, criadoEm: true, cliente: { select: { nome: true } } } }),
   ]);
 
   const receitaMes = Number(vendasMes._sum.total ?? 0);
