@@ -6,6 +6,7 @@ const atalhos = [
   ["Histórico de vendas", "/vendas", "Consulte vendas já registradas."],
   ["Produtos", "/produtos", "Cadastre produtos, preços e estoque."],
   ["Clientes", "/clientes", "Organize seus clientes e contatos."],
+  ["Financeiro", "/financeiro", "Registre despesas e acompanhe os gastos."],
 ];
 
 export default function HomePage() {
