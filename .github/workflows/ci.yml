@@ -1,0 +1,26 @@
+name: Verificar aplicativo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependências
+        run: npm install
+      - name: Compilar Next.js e Prisma
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/salgado_facil
+          NEXTAUTH_SECRET: ci-secret-temporario-apenas-para-build
+          NEXTAUTH_URL: http://localhost:3000
