@@ -3,6 +3,7 @@ import Link from "next/link";
 const atalhos = [
   ["Pedidos", "/pedidos", "Organize encomendas e acompanhe o preparo."],
   ["Nova venda", "/vendas/nova", "Registre uma venda no balcão."],
+  ["Histórico de vendas", "/vendas", "Consulte vendas já registradas."],
   ["Produtos", "/produtos", "Cadastre produtos, preços e estoque."],
   ["Clientes", "/clientes", "Organize seus clientes e contatos."],
 ];
